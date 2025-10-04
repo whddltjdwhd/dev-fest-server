@@ -85,7 +85,7 @@ const testCase2 = `
 export function findWorkableSlots(schedule, constraints) {
   // 강의 종료 직후 이동 시간 없이 알바 시작
   return [
-    { day: '월', start: '12:00', end: '13:45' }  // 월요일 12:00 강의 종료 → 15분 이동시간 필요
+    { day: '화', start: '11:00', end: '12:45' }  // 화요일 11:00 강의 종료 → 15분 이동시간 필요
   ];
 }
 `;
@@ -97,7 +97,7 @@ const testCase3 = `
 export function findWorkableSlots(schedule, constraints) {
   // 60분 미만의 짧은 근무 시간
   return [
-    { day: '월', start: '12:15', end: '13:00' }  // 45분 (최소 60분 필요)
+    { day: '화', start: '11:15', end: '12:00' }  // 45분 (최소 60분 필요)
   ];
 }
 `;
@@ -119,10 +119,10 @@ export function findWorkableSlots(schedule, constraints) {
 // ============================================
 const testCase5 = `
 export function findWorkableSlots(schedule, constraints) {
-  // 월요일만 찾고 다른 요일 누락
+  // 화요일만 찾고 다른 요일 누락
   return [
-    { day: '월', start: '12:15', end: '13:45' }
-    // 화, 수, 목, 금 누락
+    { day: '화', start: '11:15', end: '12:45' }
+    // 수, 목, 금 누락
   ];
 }
 `;
@@ -132,10 +132,10 @@ export function findWorkableSlots(schedule, constraints) {
 // ============================================
 const testCase10 = `
 export function findWorkableSlots(schedule, constraints) {
-  // 월요일 09:00-12:00(이산수학) 종료 후
-  // 이동시간 없이 바로 12:00에 시작 (12:15부터 가능)
+  // 화요일 09:00-11:00(자료구조) 종료 후
+  // 이동시간 없이 바로 11:00에 시작 (11:15부터 가능)
   return [
-    { day: '월', start: '12:00', end: '13:15' }  // 이동시간 미준수
+    { day: '화', start: '11:00', end: '12:15' }  // 이동시간 미준수
   ];
 }
 `;
@@ -154,14 +154,30 @@ export function findWorkableSlots(schedule, constraints) {
 `;
 
 // ============================================
-// 테스트 케이스 12: 화요일 이동 시간 미준수
+// 테스트 케이스 12: 이동 시간 미준수 (일반 건물)
 // ============================================
 const testCase12 = `
 export function findWorkableSlots(schedule, constraints) {
-  // 화요일 자료구조(09:00-11:00) 후 이동 시간 부족
+  // 목요일 컴퓨터네트워크(09:00-11:00, 과학관 = 일반 건물) 후 이동 시간 부족
   // 11:00 종료 후 15분 이동 필요 → 11:15부터 가능
   return [
-    { day: '화', start: '11:05', end: '12:05' }  // 11:15부터 가능한데 11:05에 시작
+    { day: '목', start: '11:05', end: '12:05' }  // 11:15부터 가능한데 11:05에 시작
+  ];
+}
+`;
+
+// ============================================
+// 테스트 케이스 13: Rule #6 인접 건물 보너스 미활용 (RULE_INCOMPLETE)
+// ============================================
+const testCase13 = `
+export function findWorkableSlots(schedule, constraints) {
+  // 화요일 자료구조(11:00 종료, 정보문화관 = 인접건물)
+  // 인접건물이므로 11:05부터 가능한데, 일반 15분을 적용해서 11:15부터 시작
+  // 결과적으로 11:05-11:15 구간을 놓침 → RULE_INCOMPLETE
+  return [
+    { day: '화', start: '11:15', end: '12:45' },  // 11:05부터 가능한데 놓침 (인접 건물 보너스 미활용)
+    { day: '수', start: '12:15', end: '13:45' },
+    { day: '목', start: '11:15', end: '12:45' }
   ];
 }
 `;
@@ -171,7 +187,7 @@ export function findWorkableSlots(schedule, constraints) {
 // ============================================
 const testCase6 = `
 export function findWorkableSlots(schedule, constraints) {
-  const { travelTime, minWorkableSession, campusHours } = constraints;
+  const { travelTime, minWorkableSession, campusHours, adjacentBuildings, reducedTravelTime } = constraints;
   const slots = [];
   
   // 요일별로 그룹화
@@ -192,9 +208,15 @@ export function findWorkableSlots(schedule, constraints) {
       const current = classes[i];
       const next = classes[i + 1];
       
+      // Rule #6: 인접 건물 보너스 적용
+      const isCurrentAdjacent = adjacentBuildings?.includes(current.location);
+      const isNextAdjacent = adjacentBuildings?.includes(next.location);
+      const startTravel = isCurrentAdjacent ? reducedTravelTime : travelTime;
+      const endTravel = isNextAdjacent ? reducedTravelTime : travelTime;
+      
       // 이동 시간 적용
-      const possibleStart = addMinutes(current.end, travelTime);
-      const possibleEnd = addMinutes(next.start, -travelTime);
+      const possibleStart = addMinutes(current.end, startTravel);
+      const possibleEnd = addMinutes(next.start, -endTravel);
       
       // 최소 근무 시간 확인
       const duration = getMinutesDiff(possibleStart, possibleEnd);
@@ -206,7 +228,9 @@ export function findWorkableSlots(schedule, constraints) {
     // 마지막 강의 후 시간 체크
     if (classes.length > 0) {
       const lastClass = classes[classes.length - 1];
-      const possibleStart = addMinutes(lastClass.end, travelTime);
+      const isLastAdjacent = adjacentBuildings?.includes(lastClass.location);
+      const lastTravel = isLastAdjacent ? reducedTravelTime : travelTime;
+      const possibleStart = addMinutes(lastClass.end, lastTravel);
       const duration = getMinutesDiff(possibleStart, campusHours.end);
       
       if (duration >= minWorkableSession) {
@@ -289,6 +313,7 @@ ${colors.reset}`);
   await testCode('❌ 이동시간 부족 - 월요일 (Rule #2)', testCase10, 'RULE_TRAVEL_TIME');
   await testCode('❌ 연강과 겹치는 시간 (Rule #1)', testCase11, 'RULE_OVERLAP');
   await testCode('❌ 이동 시간 부족 (Rule #2)', testCase12, 'RULE_TRAVEL_TIME');
+  await testCode('❌ Rule #6: 인접 건물 보너스 미활용', testCase13, 'RULE_INCOMPLETE');
 
   console.log(`\n${colors.green}
 ╔════════════════════════════════════════════════════════════════╗

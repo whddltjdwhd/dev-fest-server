@@ -83,7 +83,7 @@ export function test_rule1_noOverlapWithClasses(slots, masterSchedule) {
  * @returns {Object} 검증 결과
  */
 export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterConstraints) {
-  const { travelTime } = masterConstraints;
+  const { travelTime, adjacentBuildings, reducedTravelTime } = masterConstraints;
 
   for (const slot of slots) {
     const classesOnSameDay = masterSchedule
@@ -93,20 +93,32 @@ export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterCons
     for (const classTime of classesOnSameDay) {
       // 강의가 알바보다 먼저 끝나는 경우
       if (classTime.end <= slot.start) {
-        const expectedMinStart = addMinutes(classTime.end, travelTime);
+        // 🎁 Rule #6: 인접 건물 보너스 체크
+        const isAdjacentBuilding =
+          adjacentBuildings && adjacentBuildings.includes(classTime.location);
+        const requiredTravelTime = isAdjacentBuilding ? reducedTravelTime : travelTime;
+
+        const expectedMinStart = addMinutes(classTime.end, requiredTravelTime);
 
         if (slot.start < expectedMinStart) {
           // 연강인지 확인
           const nextConsecutiveClass = classesOnSameDay.find(cls => cls.start === classTime.end);
 
-          let message = `수업 전후 이동 시간(${travelTime}분)을 정확히 반영하지 않았습니다.`;
+          let message = `수업 전후 이동 시간(${requiredTravelTime}분)을 정확히 반영하지 않았습니다.`;
           let hint = `${classTime.day}요일 강의가 ${classTime.end}에 끝나므로, 알바는 최소 ${expectedMinStart}부터 시작해야 합니다. (현재: ${slot.start})`;
 
+          if (isAdjacentBuilding) {
+            hint += ` 💡 ${classTime.location}은 카페 인접 건물이므로 이동시간이 ${reducedTravelTime}분으로 단축됩니다!`;
+          }
+
           if (nextConsecutiveClass) {
-            message = `연강 이후에도 이동 시간(${travelTime}분)이 필요합니다.`;
+            const nextRequiredTime = adjacentBuildings?.includes(nextConsecutiveClass.location)
+              ? reducedTravelTime
+              : travelTime;
+            message = `연강 이후에도 이동 시간(${nextRequiredTime}분)이 필요합니다.`;
             hint = `${classTime.day}요일 ${classTime.start}-${classTime.end} 강의 후 연강이 ${nextConsecutiveClass.end}까지 이어지므로, 알바는 최소 ${addMinutes(
               nextConsecutiveClass.end,
-              travelTime
+              nextRequiredTime
             )}부터 시작해야 합니다.`;
           }
 
@@ -118,6 +130,8 @@ export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterCons
               problematicSlot: slot,
               previousClass: classTime,
               hasConsecutiveClass: !!nextConsecutiveClass,
+              isAdjacentBuilding,
+              requiredTravelTime,
               hint,
             },
           };
@@ -126,20 +140,30 @@ export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterCons
 
       // 강의가 알바보다 나중에 시작하는 경우
       if (classTime.start >= slot.end) {
-        const expectedMaxEnd = addMinutes(classTime.start, -travelTime);
+        // 🎁 Rule #6: 다음 강의가 인접 건물인지 체크
+        const isNextAdjacent = adjacentBuildings && adjacentBuildings.includes(classTime.location);
+        const requiredEndTravelTime = isNextAdjacent ? reducedTravelTime : travelTime;
+        const expectedMaxEnd = addMinutes(classTime.start, -requiredEndTravelTime);
 
         if (slot.end > expectedMaxEnd) {
           // 이전 연강 확인
           const prevConsecutiveClass = classesOnSameDay.find(cls => cls.end === classTime.start);
 
-          let message = `수업 전후 이동 시간(${travelTime}분)을 정확히 반영하지 않았습니다.`;
+          let message = `수업 전후 이동 시간(${requiredEndTravelTime}분)을 정확히 반영하지 않았습니다.`;
           let hint = `${classTime.day}요일 강의가 ${classTime.start}에 시작하므로, 알바는 최대 ${expectedMaxEnd}까지만 가능합니다. (현재: ${slot.end})`;
 
+          if (isNextAdjacent) {
+            hint += ` 💡 ${classTime.location}은 카페 인접 건물이므로 이동시간이 ${reducedTravelTime}분으로 단축됩니다!`;
+          }
+
           if (prevConsecutiveClass) {
-            message = `연강 이전에도 이동 시간(${travelTime}분)이 필요합니다.`;
+            const prevRequiredTime = adjacentBuildings?.includes(prevConsecutiveClass.location)
+              ? reducedTravelTime
+              : travelTime;
+            message = `연강 이전에도 이동 시간(${prevRequiredTime}분)이 필요합니다.`;
             hint = `${classTime.day}요일 ${prevConsecutiveClass.start}부터 연강이 시작되므로, 알바는 최대 ${addMinutes(
               prevConsecutiveClass.start,
-              -travelTime
+              -prevRequiredTime
             )}까지만 가능합니다.`;
           }
 
@@ -151,6 +175,8 @@ export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterCons
               problematicSlot: slot,
               nextClass: classTime,
               hasConsecutiveClass: !!prevConsecutiveClass,
+              isNextAdjacent,
+              requiredEndTravelTime,
               hint,
             },
           };

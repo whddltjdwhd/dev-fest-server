@@ -11,14 +11,10 @@ import { MASTER_CONSTRAINTS, MASTER_SCHEDULE } from '../data/masterData.js';
 export function getProblem(req, res) {
   try {
     const problemData = {
-      title: '알바 시간 찾기 미션',
+      title: '알바 시간 찾기 미션!',
       description: '주어진 강의 시간표를 보고, 알바가 가능한 모든 시간대를 찾아주세요!',
       schedule: MASTER_SCHEDULE,
-      constraints: {
-        travelTime: MASTER_CONSTRAINTS.travelTime,
-        minWorkableSession: MASTER_CONSTRAINTS.minWorkableSession,
-        campusHours: MASTER_CONSTRAINTS.campusHours,
-      },
+      constraints: MASTER_CONSTRAINTS,
       rules: [
         {
           id: 1,

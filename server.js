@@ -92,7 +92,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   Server running on port ${PORT}`);
   console.log('🚀 ================================');
   console.log('');
-  console.log('📍 Available endpoints:');
+  console.log('📍 Available endpoints!!:');
   console.log(`   GET  http://localhost:${PORT}/api/problem`);
   console.log(`   POST http://localhost:${PORT}/api/execute-and-validate`);
   console.log(`   GET  http://localhost:${PORT}/health`);

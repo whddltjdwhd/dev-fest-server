@@ -127,6 +127,20 @@ export const MASTER_CONSTRAINTS = {
 
   // 요일 순서 (정렬용)
   dayOrder: ['월', '화', '수', '목', '금'],
+
+  // 알바 장소 (카페 위치)
+  cafeLocation: '중앙도서관',
+
+  // 인접 건물 정보 (카페에서 가까운 건물들)
+  // 이 건물들에서 끝나는 수업 후에는 이동 시간이 5분으로 단축
+  adjacentBuildings: [
+    '정보문화관 P407', // 화요일 자료구조 및 실습
+    '백양관 세미나실', // 화요일 운영체제
+    '학생회관 대강당', // 수요일 소프트웨어공학개론
+  ],
+
+  // 단축된 이동 시간 (인접 건물에서 카페까지)
+  reducedTravelTime: 5,
 };
 
 /**
@@ -163,9 +177,22 @@ export function calculateCorrectSlots(
       const currentClass = classesOnDay[i];
       const nextClass = classesOnDay[i + 1];
 
+      // 🎁 Rule #6: 인접 건물 보너스 적용 (현재 강의)
+      const isCurrentAdjacent =
+        constraints.adjacentBuildings &&
+        constraints.adjacentBuildings.includes(currentClass.location);
+      const startTravelTime = isCurrentAdjacent
+        ? constraints.reducedTravelTime
+        : constraints.travelTime;
+
+      // 🎁 Rule #6: 인접 건물 보너스 적용 (다음 강의)
+      const isNextAdjacent =
+        constraints.adjacentBuildings && constraints.adjacentBuildings.includes(nextClass.location);
+      const endTravelTime = isNextAdjacent ? constraints.reducedTravelTime : constraints.travelTime;
+
       // 이동 시간을 고려한 실제 가능 시간
-      const workableStart = addMinutes(currentClass.end, constraints.travelTime);
-      const workableEnd = addMinutes(nextClass.start, -constraints.travelTime);
+      const workableStart = addMinutes(currentClass.end, startTravelTime);
+      const workableEnd = addMinutes(nextClass.start, -endTravelTime);
 
       const duration = getMinutesDiff(workableStart, workableEnd);
 
@@ -177,7 +204,13 @@ export function calculateCorrectSlots(
 
     // 마지막 강의 이후 시간 체크
     const lastClass = classesOnDay[classesOnDay.length - 1];
-    const afterClassStart = addMinutes(lastClass.end, constraints.travelTime);
+    const isLastClassAdjacent =
+      constraints.adjacentBuildings && constraints.adjacentBuildings.includes(lastClass.location);
+    const lastClassTravelTime = isLastClassAdjacent
+      ? constraints.reducedTravelTime
+      : constraints.travelTime;
+
+    const afterClassStart = addMinutes(lastClass.end, lastClassTravelTime);
     const afterClassDuration = getMinutesDiff(afterClassStart, campusHours.end);
 
     if (afterClassDuration >= constraints.minWorkableSession) {

@@ -70,19 +70,18 @@ describe('Rule #1: 강의 시간 중첩 검증', () => {
 });
 
 describe('Rule #2: 이동 시간 준수 검증', () => {
-  test('이동 시간을 고려하지 않은 시간은 실패해야 합니다', () => {
-    // 충분한 gap이 있는 강의 찾기 (화요일: 11:00 끝, 13:00 시작 => 2시간 gap)
-    // 11:00에서 11:05까지 (travelTime=15분 부족, overlap 없음, 최소 시간 충족)
-    const classBeforeGap = MASTER_SCHEDULE.find(
-      cls => cls.day === '화' && cls.start === '09:00' && cls.end === '11:00'
+  test('이동 시간을 고려하지 않은 시간은 실패해야 합니다 (일반 건물)', () => {
+    // 목요일 컴퓨터네트워크 (09:00-11:00, 과학관 = 인접 건물 아님)
+    const normalBuilding = MASTER_SCHEDULE.find(
+      cls => cls.day === '목' && cls.start === '09:00' && cls.end === '11:00'
     );
 
-    expect(classBeforeGap).toBeDefined(); // 반드시 찾아야 함
+    expect(normalBuilding).toBeDefined();
 
-    const insufficientStart = addMinutes(classBeforeGap.end, 5); // 5분만 대기 (15분 필요)
+    const insufficientStart = addMinutes(normalBuilding.end, 5); // 5분만 대기 (15분 필요)
     const noTravelTimeSlots = [
       {
-        day: classBeforeGap.day,
+        day: normalBuilding.day,
         start: insufficientStart,
         end: addMinutes(insufficientStart, MASTER_CONSTRAINTS.minWorkableSession),
       },
@@ -105,6 +104,82 @@ describe('Rule #2: 이동 시간 준수 검증', () => {
     ];
     const result = grade(correctTravelTimeSlots, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     // Rule #2는 통과 (다른 규칙에서 실패할 수 있음)
+    expect(result.failedRule).not.toBe('RULE_TRAVEL_TIME');
+  });
+
+  test('인접 건물에서는 5분 이동시간만 필요합니다', () => {
+    // 화요일 자료구조 (정보문화관 P407 - 인접 건물)
+    const adjacentBuilding = MASTER_SCHEDULE.find(
+      cls => cls.day === '화' && cls.location === '정보문화관 P407'
+    );
+
+    expect(adjacentBuilding).toBeDefined();
+
+    const reducedTravelStart = addMinutes(
+      adjacentBuilding.end,
+      MASTER_CONSTRAINTS.reducedTravelTime
+    ); // 5분만 대기
+    const adjacentSlots = [
+      {
+        day: adjacentBuilding.day,
+        start: reducedTravelStart,
+        end: addMinutes(reducedTravelStart, MASTER_CONSTRAINTS.minWorkableSession),
+      },
+    ];
+    const result = grade(adjacentSlots, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    // Rule #2는 통과해야 함 (인접 건물 보너스)
+    expect(result.failedRule).not.toBe('RULE_TRAVEL_TIME');
+  });
+
+  test('인접 건물이 아닌 경우 15분 이동시간이 필요합니다', () => {
+    // 월요일 프로그래밍기초 (공학관 강의실 - 인접 건물 아님)
+    const nonAdjacentBuilding = MASTER_SCHEDULE.find(
+      cls => cls.day === '월' && cls.location === '공학관 강의실'
+    );
+
+    expect(nonAdjacentBuilding).toBeDefined();
+
+    const insufficientStart = addMinutes(
+      nonAdjacentBuilding.end,
+      MASTER_CONSTRAINTS.reducedTravelTime
+    ); // 5분만 대기
+    const nonAdjacentSlots = [
+      {
+        day: nonAdjacentBuilding.day,
+        start: insufficientStart,
+        end: addMinutes(insufficientStart, MASTER_CONSTRAINTS.minWorkableSession),
+      },
+    ];
+    const result = grade(nonAdjacentSlots, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    expect(result.success).toBe(false);
+    expect(result.failedRule).toBe('RULE_TRAVEL_TIME');
+  });
+
+  test('같은 날 인접 건물과 일반 건물이 섞여 있어도 정확히 판단합니다', () => {
+    // 화요일: 자료구조 (정보문화관, 인접) 09:00-11:00, 알고리즘 (과학관, 일반) 13:00-15:00
+    const adjacentClass = MASTER_SCHEDULE.find(
+      cls => cls.day === '화' && cls.location === '정보문화관 P407'
+    );
+    const normalClass = MASTER_SCHEDULE.find(
+      cls => cls.day === '화' && cls.location === '과학관 실험실'
+    );
+
+    expect(adjacentClass).toBeDefined();
+    expect(normalClass).toBeDefined();
+
+    const mixedSlots = [
+      {
+        day: '화',
+        start: addMinutes(adjacentClass.end, MASTER_CONSTRAINTS.reducedTravelTime), // 11:05
+        end: addMinutes(adjacentClass.end, MASTER_CONSTRAINTS.reducedTravelTime + 100), // 12:45
+      },
+      {
+        day: '화',
+        start: addMinutes(normalClass.end, MASTER_CONSTRAINTS.travelTime), // 15:15
+        end: addMinutes(normalClass.end, MASTER_CONSTRAINTS.travelTime + 60), // 16:15
+      },
+    ];
+    const result = grade(mixedSlots, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.failedRule).not.toBe('RULE_TRAVEL_TIME');
   });
 });
