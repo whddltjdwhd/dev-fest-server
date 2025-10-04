@@ -3,7 +3,7 @@
  * 각 규칙별로 의도적으로 틀린 코드를 제출합니다
  */
 
-const API_URL = 'http://localhost:3001/api/execute-and-validate';
+const API_URL = 'http://localhost:3000/api/execute-and-validate';
 
 // 색상 출력용
 const colors = {
@@ -109,7 +109,7 @@ const testCase4 = `
 export function findWorkableSlots(schedule, constraints) {
   // 캠퍼스 운영 시간(09:00-18:00) 벗어남
   return [
-    { day: '월', start: '08:00', end: '09:30' }  // 09:00 이전 시작
+    { day: '금', start: '18:15', end: '19:15' }  // 18:00 이후 종료 (금요일 마지막 강의 12:00 종료)
   ];
 }
 `;
@@ -123,6 +123,45 @@ export function findWorkableSlots(schedule, constraints) {
   return [
     { day: '월', start: '12:15', end: '13:45' }
     // 화, 수, 목, 금 누락
+  ];
+}
+`;
+
+// ============================================
+// 테스트 케이스 10: 연강 사이 이동시간 부족 (실제로는 RULE_TRAVEL_TIME)
+// ============================================
+const testCase10 = `
+export function findWorkableSlots(schedule, constraints) {
+  // 월요일 09:00-12:00(이산수학) 종료 후
+  // 이동시간 없이 바로 12:00에 시작 (12:15부터 가능)
+  return [
+    { day: '월', start: '12:00', end: '13:15' }  // 이동시간 미준수
+  ];
+}
+`;
+
+// ============================================
+// 테스트 케이스 11: 연강과 겹치는 시간 (RULE_OVERLAP)
+// ============================================
+const testCase11 = `
+export function findWorkableSlots(schedule, constraints) {
+  // 월요일 연강(12:00-15:30 비판적사고와토론)과 겹치는 시간
+  // 주의: 월요일은 14:00-18:00 컴퓨터구조론도 있어 복잡함
+  return [
+    { day: '월', start: '15:30', end: '16:30' }  // 컴퓨터구조론(14:00-18:00)과 겹침
+  ];
+}
+`;
+
+// ============================================
+// 테스트 케이스 12: 화요일 이동 시간 미준수
+// ============================================
+const testCase12 = `
+export function findWorkableSlots(schedule, constraints) {
+  // 화요일 자료구조(09:00-11:00) 후 이동 시간 부족
+  // 11:00 종료 후 15분 이동 필요 → 11:15부터 가능
+  return [
+    { day: '화', start: '11:05', end: '12:05' }  // 11:15부터 가능한데 11:05에 시작
   ];
 }
 `;
@@ -244,9 +283,12 @@ ${colors.reset}`);
   await testCode('❌ Rule #4: 캠퍼스 시간 위반', testCase4, 'RULE_CAMPUS_HOURS');
   await testCode('❌ Rule #5: 불완전한 답안', testCase5, 'RULE_INCOMPLETE');
   await testCode('✅ 정답 코드 (모든 규칙 통과)', testCase6, null);
-  await testCode('❌ 문법 오류', testCase7, 'SYNTAX_ERROR');
+  await testCode('❌ 문법 오류', testCase7, 'EXECUTION_ERROR');
   await testCode('❌ 타임아웃 (무한루프)', testCase8, 'TIMEOUT');
   await testCode('❌ 보안 위반 (require)', testCase9, 'SECURITY_VIOLATION');
+  await testCode('❌ 이동시간 부족 - 월요일 (Rule #2)', testCase10, 'RULE_TRAVEL_TIME');
+  await testCode('❌ 연강과 겹치는 시간 (Rule #1)', testCase11, 'RULE_OVERLAP');
+  await testCode('❌ 이동 시간 부족 (Rule #2)', testCase12, 'RULE_TRAVEL_TIME');
 
   console.log(`\n${colors.green}
 ╔════════════════════════════════════════════════════════════════╗

@@ -41,9 +41,9 @@ export async function executeUserCode(code, schedule, constraints) {
     // export 구문 제거 (샌드박스 환경에서는 ES6 모듈 불필요)
     const cleanedCode = code.replace(/export\s+(default\s+)?/g, '');
 
-    const executableCode = `
-      ${cleanedCode}
-      
+    const executableCode =
+      cleanedCode +
+      `
       // 함수가 정의되었는지 확인
       if (typeof findWorkableSlots !== 'function') {
         throw new Error('findWorkableSlots 함수가 정의되지 않았습니다.');

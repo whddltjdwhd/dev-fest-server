@@ -39,16 +39,28 @@ export function test_rule1_noOverlapWithClasses(slots, masterSchedule) {
 
     for (const classTime of classesOnSameDay) {
       if (hasOverlap(slot, classTime)) {
+        // 연강인지 확인 (같은 날의 다른 강의가 바로 연결되는 경우)
+        const consecutiveClass = classesOnSameDay.find(
+          cls => cls.end === classTime.start || cls.start === classTime.end
+        );
+
+        let message = `제출한 알바 시간 중 일부가 기존 강의 시간과 겹칩니다.`;
+        let hint = `${slot.day}요일 ${slot.start}-${slot.end}은 강의 시간(${classTime.start}-${classTime.end})과 겹칩니다.`;
+
+        if (consecutiveClass) {
+          message = `연강 시간에는 알바를 할 수 없습니다.`;
+          hint = `${slot.day}요일 ${classTime.start}-${classTime.end} 강의는 다른 강의와 연결되어 있어 쉬는 시간이 없습니다.`;
+        }
+
         return {
           passed: false,
-          message: `제출한 알바 시간 중 일부가 기존 강의 시간과 겹칩니다.`,
+          message,
           failedRule: RULE_TYPES.OVERLAP,
           details: {
             conflictingSlot: slot,
             conflictingClass: classTime,
-            hint: `${slot.day}요일 ${slot.start}-${slot.end}은 강의 시간(${
-              classTime.start
-            }-${classTime.end})과 겹칩니다.`,
+            isConsecutive: !!consecutiveClass,
+            hint,
           },
         };
       }
@@ -84,16 +96,29 @@ export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterCons
         const expectedMinStart = addMinutes(classTime.end, travelTime);
 
         if (slot.start < expectedMinStart) {
+          // 연강인지 확인
+          const nextConsecutiveClass = classesOnSameDay.find(cls => cls.start === classTime.end);
+
+          let message = `수업 전후 이동 시간(${travelTime}분)을 정확히 반영하지 않았습니다.`;
+          let hint = `${classTime.day}요일 강의가 ${classTime.end}에 끝나므로, 알바는 최소 ${expectedMinStart}부터 시작해야 합니다. (현재: ${slot.start})`;
+
+          if (nextConsecutiveClass) {
+            message = `연강 이후에도 이동 시간(${travelTime}분)이 필요합니다.`;
+            hint = `${classTime.day}요일 ${classTime.start}-${classTime.end} 강의 후 연강이 ${nextConsecutiveClass.end}까지 이어지므로, 알바는 최소 ${addMinutes(
+              nextConsecutiveClass.end,
+              travelTime
+            )}부터 시작해야 합니다.`;
+          }
+
           return {
             passed: false,
-            message: `수업 전후 이동 시간(${travelTime}분)을 정확히 반영하지 않았습니다.`,
+            message,
             failedRule: RULE_TYPES.TRAVEL_TIME,
             details: {
               problematicSlot: slot,
               previousClass: classTime,
-              hint: `${classTime.day}요일 강의가 ${classTime.end}에 끝나므로, 알바는 최소 ${
-                expectedMinStart
-              }부터 시작해야 합니다. (현재: ${slot.start})`,
+              hasConsecutiveClass: !!nextConsecutiveClass,
+              hint,
             },
           };
         }
@@ -104,16 +129,29 @@ export function test_rule2_adheresToTravelTime(slots, masterSchedule, masterCons
         const expectedMaxEnd = addMinutes(classTime.start, -travelTime);
 
         if (slot.end > expectedMaxEnd) {
+          // 이전 연강 확인
+          const prevConsecutiveClass = classesOnSameDay.find(cls => cls.end === classTime.start);
+
+          let message = `수업 전후 이동 시간(${travelTime}분)을 정확히 반영하지 않았습니다.`;
+          let hint = `${classTime.day}요일 강의가 ${classTime.start}에 시작하므로, 알바는 최대 ${expectedMaxEnd}까지만 가능합니다. (현재: ${slot.end})`;
+
+          if (prevConsecutiveClass) {
+            message = `연강 이전에도 이동 시간(${travelTime}분)이 필요합니다.`;
+            hint = `${classTime.day}요일 ${prevConsecutiveClass.start}부터 연강이 시작되므로, 알바는 최대 ${addMinutes(
+              prevConsecutiveClass.start,
+              -travelTime
+            )}까지만 가능합니다.`;
+          }
+
           return {
             passed: false,
-            message: `수업 전후 이동 시간(${travelTime}분)을 정확히 반영하지 않았습니다.`,
+            message,
             failedRule: RULE_TYPES.TRAVEL_TIME,
             details: {
               problematicSlot: slot,
               nextClass: classTime,
-              hint: `${classTime.day}요일 강의가 ${classTime.start}에 시작하므로, 알바는 최대 ${
-                expectedMaxEnd
-              }까지만 가능합니다. (현재: ${slot.end})`,
+              hasConsecutiveClass: !!prevConsecutiveClass,
+              hint,
             },
           };
         }

@@ -17,6 +17,13 @@ export const MASTER_SCHEDULE = [
     location: '자연과학관 B117',
   },
   {
+    name: '비판적사고와토론',
+    day: '월',
+    start: '12:00',
+    end: '14:00',
+    location: '산학협동관 104',
+  },
+  {
     name: '컴퓨터구조론',
     day: '월',
     start: '14:00',
