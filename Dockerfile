@@ -20,7 +20,8 @@ WORKDIR /build
 COPY package*.json ./
 
 # 프로덕션 의존성만 설치 (빌드 포함)
-RUN npm ci --only=production
+# npm ci는 package-lock.json이 필요하므로 npm install 사용
+RUN npm install --production
 
 # 소스 코드 복사
 COPY . .
