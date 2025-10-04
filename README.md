@@ -85,6 +85,7 @@ GET /api/problem
 ```
 
 **응답 예시:**
+
 ```json
 {
   "title": "알바 시간 찾기 미션",
@@ -106,6 +107,7 @@ Content-Type: application/json
 ```
 
 **성공 응답:**
+
 ```json
 {
   "success": true,
@@ -115,6 +117,7 @@ Content-Type: application/json
 ```
 
 **실패 응답:**
+
 ```json
 {
   "success": false,
@@ -144,12 +147,12 @@ GET /health
 
 ```javascript
 // ❌ 모두 차단됨
-require('fs')
-import fs from 'fs'
-eval('code')
-new Function()
-process.exit()
-child_process.exec()
+require('fs');
+import fs from 'fs';
+eval('code');
+new Function();
+process.exit();
+child_process.exec();
 ```
 
 ## 📦 Render 배포 가이드
@@ -177,6 +180,7 @@ git push origin main
 ### 3단계: 자동 배포 완료!
 
 배포 후 생성되는 URL:
+
 ```
 https://handson-server.onrender.com/api/problem
 https://handson-server.onrender.com/api/execute-and-validate
@@ -224,14 +228,14 @@ handson-server/
 
 ## 🔧 기술 스택
 
-| 카테고리 | 기술 |
-|---------|------|
-| **Runtime** | Node.js 18+ |
-| **Framework** | Express 4 |
-| **Sandbox** | isolated-vm 5.0.2 |
-| **Testing** | Jest 29 |
-| **Deployment** | Render (Docker) |
-| **Container** | Alpine Linux |
+| 카테고리       | 기술              |
+| -------------- | ----------------- |
+| **Runtime**    | Node.js 18+       |
+| **Framework**  | Express 4         |
+| **Sandbox**    | isolated-vm 5.0.2 |
+| **Testing**    | Jest 29           |
+| **Deployment** | Render (Docker)   |
+| **Container**  | Alpine Linux      |
 
 ## 📊 성능 최적화
 
@@ -245,6 +249,7 @@ handson-server/
 ### isolated-vm 빌드 실패
 
 Dockerfile에 빌드 도구가 포함되어 있습니다:
+
 ```dockerfile
 RUN apk add python3 make g++ gcc musl-dev linux-headers
 ```
@@ -252,12 +257,14 @@ RUN apk add python3 make g++ gcc musl-dev linux-headers
 ### Render Free Tier Cold Start
 
 15분 미사용 시 슬립 모드:
+
 - 첫 요청: 30초~1분 소요
 - 해결: Cron job으로 주기적 핑 (UptimeRobot)
 
 ### 메모리 초과
 
 샌드박스 메모리 제한 조정:
+
 ```javascript
 // services/codeExecutor.js
 const isolate = new ivm.Isolate({ memoryLimit: 64 }); // 32 → 64MB
@@ -279,6 +286,7 @@ npm run test:coverage
 ```
 
 **현재 테스트 커버리지:**
+
 - ✅ graderService: 21/21 테스트 통과
 - ✅ 5가지 규칙 검증 모두 포함
 - ✅ 에지 케이스 처리
@@ -292,8 +300,8 @@ npm run test:coverage
 const problemResponse = await fetch('https://handson-server.onrender.com/api/problem');
 const problem = await problemResponse.json();
 
-console.log(problem.title);      // "알바 시간 찾기 미션"
-console.log(problem.schedule);   // 강의 시간표
+console.log(problem.title); // "알바 시간 찾기 미션"
+console.log(problem.schedule); // 강의 시간표
 console.log(problem.constraints); // 제약 조건
 
 // 사용자 코드 작성
@@ -332,7 +340,7 @@ export function findWorkableSlots(schedule, constraints) {
 const gradeResponse = await fetch('https://handson-server.onrender.com/api/execute-and-validate', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ code: userCode })
+  body: JSON.stringify({ code: userCode }),
 });
 
 const result = await gradeResponse.json();
@@ -350,6 +358,7 @@ if (result.success) {
 ## 🎯 5가지 검증 규칙
 
 ### Rule #1: 강의 시간 중첩 금지
+
 ```javascript
 // ❌ 실패
 { day: '월', start: '11:30', end: '12:30' }  // 11:00-13:00 강의와 겹침
@@ -359,6 +368,7 @@ if (result.success) {
 ```
 
 ### Rule #2: 이동 시간 준수 (15분)
+
 ```javascript
 // ❌ 실패
 { day: '월', start: '13:00', end: '14:00' }  // 13:00 강의 종료 직후
@@ -368,6 +378,7 @@ if (result.success) {
 ```
 
 ### Rule #3: 최소 근무 시간 (60분)
+
 ```javascript
 // ❌ 실패
 { day: '화', start: '12:00', end: '12:45' }  // 45분
@@ -377,6 +388,7 @@ if (result.success) {
 ```
 
 ### Rule #4: 캠퍼스 활동 시간 (09:00-18:00)
+
 ```javascript
 // ❌ 실패
 { day: '수', start: '08:00', end: '09:00' }  // 09:00 이전
@@ -386,36 +398,37 @@ if (result.success) {
 ```
 
 ### Rule #5: 완전성 (모든 시간대 찾기)
+
 ```javascript
 // ❌ 실패 - 일부 누락
 [
   { day: '월', start: '12:15', end: '13:45' },
-  { day: '화', start: '11:15', end: '12:45' }
+  { day: '화', start: '11:15', end: '12:45' },
   // 나머지 4개 시간대 누락
-]
-
-// ✅ 통과 - 6개 모두 찾음
-[
-  { day: '월', start: '12:15', end: '13:45' },
+][
+  // ✅ 통과 - 6개 모두 찾음
+  ({ day: '월', start: '12:15', end: '13:45' },
   { day: '화', start: '11:15', end: '12:45' },
   { day: '수', start: '12:15', end: '13:45' },
   { day: '수', start: '16:15', end: '18:00' },
   { day: '목', start: '11:15', end: '12:45' },
-  { day: '금', start: '12:15', end: '14:45' }
-]
+  { day: '금', start: '12:15', end: '14:45' })
+];
 ```
 
 ## 🔐 보안 고려사항
 
 ### 허용되는 코드
+
 ```javascript
 // ✅ 안전한 JavaScript 연산
 const arr = [1, 2, 3];
 arr.map(x => x * 2);
-for (let i = 0; i < 10; i++) { }
+for (let i = 0; i < 10; i++) {}
 ```
 
 ### 차단되는 코드
+
 ```javascript
 // ❌ 파일 시스템 접근
 require('fs').readFileSync('/etc/passwd');
@@ -463,10 +476,12 @@ MIT License
 ---
 
 **🚀 Happy Coding!**
+
 - 메모리 제한 (32MB)
 - 위험한 API 접근 차단
 
 ### 2. 다층 보안 시스템
+
 ```javascript
 // 차단되는 패턴
 - require()
@@ -478,6 +493,7 @@ MIT License
 ```
 
 ### 3. 체계적인 채점 시스템
+
 5가지 독립적인 테스트 함수가 순차적으로 실행되며, 하나라도 실패하면 즉시 중단됩니다.
 
 ## 📁 프로젝트 구조
@@ -507,11 +523,13 @@ handson-server/
 ## 🔧 설치 및 실행
 
 ### 1. 의존성 설치
+
 ```bash
 npm install
 ```
 
 ### 2. 테스트 실행
+
 ```bash
 # 전체 테스트
 npm test
@@ -527,6 +545,7 @@ npm run test:coverage
 ```
 
 ### 3. 로컬 개발
+
 ```bash
 # Netlify CLI 설치 (전역)
 npm install -g netlify-cli
@@ -538,9 +557,11 @@ netlify dev
 ## 📡 API 사용법
 
 ### 1. POST /execute-and-validate
+
 사용자 코드를 실행하고 채점합니다.
 
 #### 요청
+
 ```json
 {
   "code": "function findWorkableSlots(schedule, constraints) { /* 로직 */ return []; }"
@@ -548,6 +569,7 @@ netlify dev
 ```
 
 #### 성공 응답 (200)
+
 ```json
 {
   "status": "success",
@@ -558,6 +580,7 @@ netlify dev
 ```
 
 #### 실패 응답 (422)
+
 ```json
 {
   "status": "failed",
@@ -569,6 +592,7 @@ netlify dev
 ```
 
 ### 2. GET /problem
+
 문제 데이터를 조회합니다.
 
 ```bash
@@ -576,13 +600,12 @@ curl https://your-domain.netlify.app/.netlify/functions/problem
 ```
 
 ### 3. POST /validate
+
 결과물을 직접 제출합니다 (코드 실행 없이).
 
 ```json
 {
-  "slots": [
-    { "day": "월", "start": "12:15", "end": "13:45" }
-  ]
+  "slots": [{ "day": "월", "start": "12:15", "end": "13:45" }]
 }
 ```
 
@@ -593,19 +616,22 @@ curl https://your-domain.netlify.app/.netlify/functions/problem
 주어진 강의 시간표를 분석하여, 알바가 가능한 모든 시간대를 찾는 `findWorkableSlots` 함수를 구현하세요.
 
 ### 입력
+
 - `schedule`: 강의 시간표 배열
 - `constraints`: 제약 조건 객체
 
 ### 출력
+
 ```javascript
 [
   { day: '월', start: '12:15', end: '13:45' },
   { day: '화', start: '11:15', end: '12:45' },
   // ...
-]
+];
 ```
 
 ### 규칙
+
 1. **강의 시간 중첩 금지**: 알바 시간이 강의와 겹치면 안 됨
 2. **이동 시간 준수**: 강의 전후로 15분의 이동 시간 필요
 3. **최소 근무 시간**: 알바는 최소 60분 이상
@@ -615,6 +641,7 @@ curl https://your-domain.netlify.app/.netlify/functions/problem
 ## 🛡️ 보안 고려사항
 
 ### isolated-vm 선택 이유
+
 - **vm2는 deprecated**: 치명적인 보안 취약점으로 유지보수 중단
 - **isolated-vm 장점**:
   - 완전히 독립된 V8 인스턴스
@@ -622,6 +649,7 @@ curl https://your-domain.netlify.app/.netlify/functions/problem
   - 정밀한 리소스 제어
 
 ### 보안 레이어
+
 1. **형식 검증**: 기본 코드 구조 확인
 2. **패턴 감지**: 정규식 기반 위험 코드 탐지
 3. **샌드박스 실행**: isolated-vm을 통한 완전 격리
@@ -634,6 +662,7 @@ npm run test:coverage
 ```
 
 주요 테스트:
+
 - ✅ 채점 로직 정확성 (20+ 테스트)
 - ✅ 보안 패턴 차단 (6+ 테스트)
 - ✅ 코드 실행 안정성 (8+ 테스트)
@@ -642,10 +671,12 @@ npm run test:coverage
 ## 📚 참고 자료
 
 ### isolated-vm
+
 - [GitHub Repository](https://github.com/laverdet/isolated-vm)
 - [API Documentation](https://github.com/laverdet/isolated-vm/blob/main/API.md)
 
 ### 코딩 테스트 플랫폼 사례
+
 - LeetCode
 - HackerRank
 - Programmers

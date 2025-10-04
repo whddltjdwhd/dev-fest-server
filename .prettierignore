@@ -1,0 +1,22 @@
+# Prettier ignore file
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+coverage/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Config
+package-lock.json
+
+# Docker
+Dockerfile
+.dockerignore

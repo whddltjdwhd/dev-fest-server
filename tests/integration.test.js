@@ -3,8 +3,8 @@
  * gradeCode 함수의 전체 프로세스 검증
  */
 
-import {MASTER_CONSTRAINTS, MASTER_SCHEDULE} from '../data/masterData.js';
-import {formatCodeGradeResult, gradeCode} from '../services/graderService.js';
+import { MASTER_CONSTRAINTS, MASTER_SCHEDULE } from '../data/masterData.js';
+import { formatCodeGradeResult, gradeCode } from '../services/graderService.js';
 
 describe('통합 테스트 - 코드 실행 및 채점', () => {
   test('정답 코드는 성공해야 합니다', async () => {
@@ -21,8 +21,7 @@ describe('통합 테스트 - 코드 실행 및 채점', () => {
       }
     `;
 
-    const result =
-        await gradeCode(correctCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await gradeCode(correctCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(true);
     expect(result.message).toContain('미션 성공');
   }, 10000);
@@ -37,8 +36,7 @@ describe('통합 테스트 - 코드 실행 및 채점', () => {
       }
     `;
 
-    const result =
-        await gradeCode(wrongCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await gradeCode(wrongCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.failedRule).toBe('RULE_TRAVEL_TIME');
   }, 10000);
@@ -53,8 +51,7 @@ describe('통합 테스트 - 코드 실행 및 채점', () => {
       }
     `;
 
-    const result =
-        await gradeCode(wrongCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await gradeCode(wrongCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.failedRule).toBe('RULE_MIN_DURATION');
   }, 10000);
@@ -69,8 +66,7 @@ describe('통합 테스트 - 코드 실행 및 채점', () => {
       }
     `;
 
-    const result =
-        await gradeCode(incompleteCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await gradeCode(incompleteCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.failedRule).toBe('RULE_INCOMPLETE');
   }, 10000);
@@ -82,8 +78,7 @@ describe('통합 테스트 - 코드 실행 및 채점', () => {
       }
     `;
 
-    const result =
-        await gradeCode(syntaxErrorCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await gradeCode(syntaxErrorCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.failedRule).toBe('EXECUTION_ERROR');
   }, 10000);
@@ -96,8 +91,7 @@ describe('통합 테스트 - 코드 실행 및 채점', () => {
       }
     `;
 
-    const result =
-        await gradeCode(maliciousCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await gradeCode(maliciousCode, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.failedRule).toBe('SECURITY_VIOLATION');
   }, 10000);

@@ -3,9 +3,15 @@
  * 참가자의 제출물을 체계적으로 검증하는 핵심 채점 서비스
  */
 
-import {calculateCorrectSlots, MASTER_CONSTRAINTS, MASTER_SCHEDULE} from '../data/masterData.js';
+import { calculateCorrectSlots, MASTER_CONSTRAINTS, MASTER_SCHEDULE } from '../data/masterData.js';
 
-import {test_rule1_noOverlapWithClasses, test_rule2_adheresToTravelTime, test_rule3_meetsMinDuration, test_rule4_withinCampusHours, test_rule5_isComplete} from './ruleTests.js';
+import {
+  test_rule1_noOverlapWithClasses,
+  test_rule2_adheresToTravelTime,
+  test_rule3_meetsMinDuration,
+  test_rule4_withinCampusHours,
+  test_rule5_isComplete,
+} from './ruleTests.js';
 
 /**
  * 참가자의 제출물을 채점하는 메인 함수
@@ -23,8 +29,10 @@ import {test_rule1_noOverlapWithClasses, test_rule2_adheresToTravelTime, test_ru
  *     Object }
  */
 export function grade(
-    slots, masterSchedule = MASTER_SCHEDULE,
-    masterConstraints = MASTER_CONSTRAINTS) {
+  slots,
+  masterSchedule = MASTER_SCHEDULE,
+  masterConstraints = MASTER_CONSTRAINTS
+) {
   // 정답 자동 계산
   const correctSlots = calculateCorrectSlots(masterSchedule, masterConstraints);
   // 기본 검증
@@ -34,7 +42,7 @@ export function grade(
       success: false,
       message: validation.message,
       failedRule: 'INVALID_FORMAT',
-      details: validation.details
+      details: validation.details,
     };
   }
 
@@ -43,25 +51,24 @@ export function grade(
   const tests = [
     {
       name: 'Rule #1: 강의 시간 중첩 검증',
-      fn: () => test_rule1_noOverlapWithClasses(slots, masterSchedule)
+      fn: () => test_rule1_noOverlapWithClasses(slots, masterSchedule),
     },
     {
       name: 'Rule #2: 이동 시간 준수 검증',
-      fn: () => test_rule2_adheresToTravelTime(
-          slots, masterSchedule, masterConstraints)
+      fn: () => test_rule2_adheresToTravelTime(slots, masterSchedule, masterConstraints),
     },
     {
       name: 'Rule #3: 최소 근무 시간 검증',
-      fn: () => test_rule3_meetsMinDuration(slots, masterConstraints)
+      fn: () => test_rule3_meetsMinDuration(slots, masterConstraints),
     },
     {
       name: 'Rule #4: 캠퍼스 활동 시간 검증',
-      fn: () => test_rule4_withinCampusHours(slots, masterConstraints)
+      fn: () => test_rule4_withinCampusHours(slots, masterConstraints),
     },
     {
       name: 'Rule #5: 완전성 검증',
-      fn: () => test_rule5_isComplete(slots, correctSlots)
-    }
+      fn: () => test_rule5_isComplete(slots, correctSlots),
+    },
   ];
 
   // 테스트 순차 실행
@@ -76,7 +83,7 @@ export function grade(
         failedRule: result.failedRule,
         failedTest: test.name,
         details: result.details,
-        hint: result.details?.hint
+        hint: result.details?.hint,
       };
     }
   }
@@ -85,7 +92,7 @@ export function grade(
   return {
     success: true,
     message: '🎉 미션 성공! 모든 규칙을 완벽하게 통과했습니다!',
-    details: {totalSlots: slots.length, allTestsPassed: true}
+    details: { totalSlots: slots.length, allTestsPassed: true },
   };
 }
 
@@ -101,7 +108,7 @@ function validateSubmission(slots) {
     return {
       valid: false,
       message: '제출 데이터가 없습니다.',
-      details: {received: slots}
+      details: { received: slots },
     };
   }
 
@@ -110,7 +117,7 @@ function validateSubmission(slots) {
     return {
       valid: false,
       message: '제출 데이터는 배열이어야 합니다.',
-      details: {received: typeof slots}
+      details: { received: typeof slots },
     };
   }
 
@@ -119,7 +126,7 @@ function validateSubmission(slots) {
     return {
       valid: false,
       message: '알바 가능 시간이 하나도 제출되지 않았습니다.',
-      details: {hint: '공강 시간을 찾아 제출해주세요.'}
+      details: { hint: '공강 시간을 찾아 제출해주세요.' },
     };
   }
 
@@ -131,7 +138,7 @@ function validateSubmission(slots) {
       return {
         valid: false,
         message: `${i + 1}번째 시간대가 올바른 형식이 아닙니다.`,
-        details: {index: i, received: slot}
+        details: { index: i, received: slot },
       };
     }
 
@@ -141,7 +148,7 @@ function validateSubmission(slots) {
         return {
           valid: false,
           message: `${i + 1}번째 시간대에 '${field}' 속성이 없습니다.`,
-          details: {index: i, missingField: field, slot}
+          details: { index: i, missingField: field, slot },
         };
       }
     }
@@ -151,10 +158,8 @@ function validateSubmission(slots) {
     if (!timeRegex.test(slot.start) || !timeRegex.test(slot.end)) {
       return {
         valid: false,
-        message: `${
-            i +
-            1}번째 시간대의 시간 형식이 올바르지 않습니다. (HH:MM 형식이어야 합니다)`,
-        details: {index: i, slot, expectedFormat: 'HH:MM (예: 09:30)'}
+        message: `${i + 1}번째 시간대의 시간 형식이 올바르지 않습니다. (HH:MM 형식이어야 합니다)`,
+        details: { index: i, slot, expectedFormat: 'HH:MM (예: 09:30)' },
       };
     }
 
@@ -164,12 +169,12 @@ function validateSubmission(slots) {
       return {
         valid: false,
         message: `${i + 1}번째 시간대의 요일이 올바르지 않습니다.`,
-        details: {index: i, received: slot.day, validDays}
+        details: { index: i, received: slot.day, validDays },
       };
     }
   }
 
-  return {valid: true};
+  return { valid: true };
 }
 
 /**
@@ -185,7 +190,7 @@ export function formatGradeResult(result) {
       title: '✅ 채점 완료',
       message: result.message,
       score: 100,
-      details: result.details
+      details: result.details,
     };
   }
 
@@ -197,7 +202,7 @@ export function formatGradeResult(result) {
     failedTest: result.failedTest,
     hint: result.hint || result.details?.hint,
     details: result.details,
-    score: 0
+    score: 0,
   };
 }
 
@@ -227,11 +232,14 @@ export function quickGrade(slots) {
  * @returns {Promise<Object>} 채점 결과
  */
 export async function gradeCode(
-    code, masterSchedule = MASTER_SCHEDULE,
-    masterConstraints = MASTER_CONSTRAINTS) {
+  code,
+  masterSchedule = MASTER_SCHEDULE,
+  masterConstraints = MASTER_CONSTRAINTS
+) {
   // codeExecutor 동적 import (isolated-vm 문제 회피)
-  const {validateCodeFormat, detectDangerousPatterns, executeUserCode} =
-      await import('./codeExecutor.js');
+  const { validateCodeFormat, detectDangerousPatterns, executeUserCode } = await import(
+    './codeExecutor.js'
+  );
 
   // === 1단계: 코드 형식 검증 ===
   const formatValidation = validateCodeFormat(code);
@@ -240,7 +248,7 @@ export async function gradeCode(
       success: false,
       message: formatValidation.message,
       failedRule: 'INVALID_FORMAT',
-      details: {hint: formatValidation.hint}
+      details: { hint: formatValidation.hint },
     };
   }
 
@@ -251,20 +259,19 @@ export async function gradeCode(
       success: false,
       message: `보안 경고: ${securityCheck.reason}`,
       failedRule: 'SECURITY_VIOLATION',
-      details: {hint: '허용되지 않는 코드 패턴이 감지되었습니다.'}
+      details: { hint: '허용되지 않는 코드 패턴이 감지되었습니다.' },
     };
   }
 
   // === 3단계: 샌드박스에서 코드 실행 ===
   let executionResult;
   try {
-    executionResult =
-        await executeUserCode(code, masterSchedule, masterConstraints);
+    executionResult = await executeUserCode(code, masterSchedule, masterConstraints);
   } catch (error) {
     return {
       success: false,
       message: `코드 실행 중 예상치 못한 오류: ${error.message}`,
-      failedRule: 'EXECUTION_ERROR'
+      failedRule: 'EXECUTION_ERROR',
     };
   }
 
@@ -275,10 +282,11 @@ export async function gradeCode(
       message: executionResult.error,
       failedRule: executionResult.errorType || 'EXECUTION_ERROR',
       details: {
-        hint: executionResult.errorType === 'TIMEOUT' ?
-            '무한 루프나 과도한 연산이 있는지 확인하세요.' :
-            '코드의 구문 오류나 런타임 오류를 확인하세요.'
-      }
+        hint:
+          executionResult.errorType === 'TIMEOUT'
+            ? '무한 루프나 과도한 연산이 있는지 확인하세요.'
+            : '코드의 구문 오류나 런타임 오류를 확인하세요.',
+      },
     };
   }
 
@@ -302,14 +310,17 @@ export function formatCodeGradeResult(result) {
       title: '🎉 미션 성공!',
       message: result.message,
       score: 100,
-      details: result.details
+      details: result.details,
     };
   }
 
   // 실행 오류와 검증 오류를 구분
   const isExecutionError = [
-    'INVALID_FORMAT', 'SECURITY_VIOLATION', 'EXECUTION_ERROR', 'TIMEOUT',
-    'MEMORY_LIMIT'
+    'INVALID_FORMAT',
+    'SECURITY_VIOLATION',
+    'EXECUTION_ERROR',
+    'TIMEOUT',
+    'MEMORY_LIMIT',
   ].includes(result.failedRule);
 
   return {
@@ -320,6 +331,6 @@ export function formatCodeGradeResult(result) {
     failedTest: result.failedTest,
     hint: result.hint || result.details?.hint,
     details: result.details,
-    score: 0
+    score: 0,
   };
 }

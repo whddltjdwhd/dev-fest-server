@@ -16,14 +16,14 @@ import ivm from 'isolated-vm';
  */
 export async function executeUserCode(code, schedule, constraints) {
   // 실행 시간 제한 (밀리초)
-  const EXECUTION_TIMEOUT = 1000;  // 1초
+  const EXECUTION_TIMEOUT = 1000; // 1초
 
   // 메모리 제한 (MB)
   const MEMORY_LIMIT = 32;
 
   try {
     // 1. Isolate 생성 (독립된 V8 인스턴스)
-    const isolate = new ivm.Isolate({memoryLimit: MEMORY_LIMIT});
+    const isolate = new ivm.Isolate({ memoryLimit: MEMORY_LIMIT });
 
     // 2. Context 생성 (격리된 실행 컨텍스트)
     const context = await isolate.createContext();
@@ -35,8 +35,7 @@ export async function executeUserCode(code, schedule, constraints) {
     await jail.set('scheduleData', new ivm.ExternalCopy(schedule).copyInto());
 
     // constraints 데이터 주입
-    await jail.set(
-        'constraintsData', new ivm.ExternalCopy(constraints).copyInto());
+    await jail.set('constraintsData', new ivm.ExternalCopy(constraints).copyInto());
 
     // 4. 사용자 코드와 실행 로직 조합
     // export 구문 제거 (샌드박스 환경에서는 ES6 모듈 불필요)
@@ -67,21 +66,20 @@ export async function executeUserCode(code, schedule, constraints) {
     // 6. 타임아웃과 함께 코드 실행
     const result = await script.run(context, {
       timeout: EXECUTION_TIMEOUT,
-      copy: true  // 결과를 자동으로 복사
+      copy: true, // 결과를 자동으로 복사
     });
 
     // 7. Isolate 정리 (메모리 해제)
     isolate.dispose();
 
-    return {success: true, slots: result};
-
+    return { success: true, slots: result };
   } catch (error) {
     // 에러 타입별 처리
     if (error.message && error.message.includes('Script execution timed out')) {
       return {
         success: false,
         error: '코드 실행 시간이 초과되었습니다. (제한: 1초)',
-        errorType: 'TIMEOUT'
+        errorType: 'TIMEOUT',
       };
     }
 
@@ -89,7 +87,7 @@ export async function executeUserCode(code, schedule, constraints) {
       return {
         success: false,
         error: '메모리 사용량이 제한을 초과했습니다.',
-        errorType: 'MEMORY_LIMIT'
+        errorType: 'MEMORY_LIMIT',
       };
     }
 
@@ -97,7 +95,7 @@ export async function executeUserCode(code, schedule, constraints) {
     return {
       success: false,
       error: `코드 실행 중 오류 발생: ${error.message}`,
-      errorType: 'EXECUTION_ERROR'
+      errorType: 'EXECUTION_ERROR',
     };
   }
 }
@@ -111,17 +109,17 @@ export async function executeUserCode(code, schedule, constraints) {
 export function validateCodeFormat(code) {
   // null/undefined 체크
   if (!code) {
-    return {valid: false, message: '코드가 제공되지 않았습니다.'};
+    return { valid: false, message: '코드가 제공되지 않았습니다.' };
   }
 
   // 문자열 체크
   if (typeof code !== 'string') {
-    return {valid: false, message: '코드는 문자열이어야 합니다.'};
+    return { valid: false, message: '코드는 문자열이어야 합니다.' };
   }
 
   // 빈 문자열 체크
   if (code.trim().length === 0) {
-    return {valid: false, message: '코드가 비어있습니다.'};
+    return { valid: false, message: '코드가 비어있습니다.' };
   }
 
   // 최대 길이 체크 (10KB)
@@ -129,7 +127,7 @@ export function validateCodeFormat(code) {
   if (code.length > MAX_CODE_LENGTH) {
     return {
       valid: false,
-      message: `코드 크기가 너무 큽니다. (최대: ${MAX_CODE_LENGTH / 1024}KB)`
+      message: `코드 크기가 너무 큽니다. (최대: ${MAX_CODE_LENGTH / 1024}KB)`,
     };
   }
 
@@ -138,11 +136,11 @@ export function validateCodeFormat(code) {
     return {
       valid: false,
       message: 'findWorkableSlots 함수를 정의해야 합니다.',
-      hint: 'function findWorkableSlots(schedule, constraints) { ... }'
+      hint: 'function findWorkableSlots(schedule, constraints) { ... }',
     };
   }
 
-  return {valid: true};
+  return { valid: true };
 }
 
 /**
@@ -154,28 +152,28 @@ export function validateCodeFormat(code) {
 export function detectDangerousPatterns(code) {
   // 위험한 패턴 목록
   const dangerousPatterns = [
-    {pattern: /require\s*\(/i, reason: 'require() 사용이 감지되었습니다.'},
-    {pattern: /import\s+/i, reason: 'import 구문 사용이 감지되었습니다.'},
-    {pattern: /eval\s*\(/i, reason: 'eval() 사용이 감지되었습니다.'},
+    { pattern: /require\s*\(/i, reason: 'require() 사용이 감지되었습니다.' },
+    { pattern: /import\s+/i, reason: 'import 구문 사용이 감지되었습니다.' },
+    { pattern: /eval\s*\(/i, reason: 'eval() 사용이 감지되었습니다.' },
     {
       pattern: /Function\s*\(/i,
-      reason: 'Function() 생성자 사용이 감지되었습니다.'
+      reason: 'Function() 생성자 사용이 감지되었습니다.',
     },
     {
       pattern: /child_process/i,
-      reason: '시스템 명령 실행 시도가 감지되었습니다.'
+      reason: '시스템 명령 실행 시도가 감지되었습니다.',
     },
-    {pattern: /process\./i, reason: 'process 객체 접근이 감지되었습니다.'},
-    {pattern: /fs\./i, reason: '파일 시스템 접근이 감지되었습니다.'},
+    { pattern: /process\./i, reason: 'process 객체 접근이 감지되었습니다.' },
+    { pattern: /fs\./i, reason: '파일 시스템 접근이 감지되었습니다.' },
   ];
 
-  for (const {pattern, reason} of dangerousPatterns) {
+  for (const { pattern, reason } of dangerousPatterns) {
     if (pattern.test(code)) {
-      return {safe: false, reason};
+      return { safe: false, reason };
     }
   }
 
-  return {safe: true};
+  return { safe: true };
 }
 
 /**

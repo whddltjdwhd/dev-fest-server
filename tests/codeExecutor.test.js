@@ -3,8 +3,13 @@
  * 코드 실행 및 보안 기능 검증
  */
 
-import {MASTER_CONSTRAINTS, MASTER_SCHEDULE} from '../data/masterData.js';
-import {detectDangerousPatterns, executeUserCode, getSampleCode, validateCodeFormat} from '../services/codeExecutor.js';
+import { MASTER_CONSTRAINTS, MASTER_SCHEDULE } from '../data/masterData.js';
+import {
+  detectDangerousPatterns,
+  executeUserCode,
+  getSampleCode,
+  validateCodeFormat,
+} from '../services/codeExecutor.js';
 
 describe('CodeExecutor - 코드 형식 검증', () => {
   test('null 코드는 거부되어야 합니다', () => {
@@ -27,8 +32,7 @@ describe('CodeExecutor - 코드 형식 검증', () => {
   });
 
   test('올바른 코드는 통과해야 합니다', () => {
-    const code =
-        'function findWorkableSlots(schedule, constraints) { return []; }';
+    const code = 'function findWorkableSlots(schedule, constraints) { return []; }';
     const result = validateCodeFormat(code);
     expect(result.valid).toBe(true);
   });
@@ -114,8 +118,7 @@ describe('CodeExecutor - 코드 실행', () => {
       }
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(true);
     expect(result.slots).toEqual([]);
   });
@@ -131,8 +134,7 @@ describe('CodeExecutor - 코드 실행', () => {
       }
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(true);
     expect(result.slots).toHaveLength(1);
     expect(result.slots[0].day).toBe('월');
@@ -145,8 +147,7 @@ describe('CodeExecutor - 코드 실행', () => {
       }
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.errorType).toBe('EXECUTION_ERROR');
   });
@@ -157,8 +158,7 @@ describe('CodeExecutor - 코드 실행', () => {
       const x = 10;
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.error).toContain('정의되지 않았습니다');
   });
@@ -170,8 +170,7 @@ describe('CodeExecutor - 코드 실행', () => {
       }
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.error).toContain('배열을 반환');
   });
@@ -186,11 +185,10 @@ describe('CodeExecutor - 코드 실행', () => {
       }
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(false);
     expect(result.errorType).toBe('TIMEOUT');
-  }, 10000);  // 10초 타임아웃
+  }, 10000); // 10초 타임아웃
 
   test('복잡한 계산도 제한 시간 내에 완료되어야 합니다', async () => {
     const code = `
@@ -213,8 +211,7 @@ describe('CodeExecutor - 코드 실행', () => {
       }
     `;
 
-    const result =
-        await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(code, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(true);
     expect(Array.isArray(result.slots)).toBe(true);
   });
@@ -231,8 +228,7 @@ describe('CodeExecutor - 샘플 코드', () => {
 
   test('샘플 코드가 실행 가능해야 합니다', async () => {
     const sample = getSampleCode();
-    const result =
-        await executeUserCode(sample, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
+    const result = await executeUserCode(sample, MASTER_SCHEDULE, MASTER_CONSTRAINTS);
     expect(result.success).toBe(true);
   });
 });

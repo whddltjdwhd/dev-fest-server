@@ -1,9 +1,7 @@
 {
   "testEnvironment": "node",
   "transform": {},
-  "testMatch": [
-    "**/tests/**/*.test.js"
-  ],
+  "testMatch": ["**/tests/**/*.test.js"],
   "collectCoverageFrom": [
     "services/**/*.js",
     "utils/**/*.js",

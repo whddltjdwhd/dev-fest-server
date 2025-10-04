@@ -6,20 +6,22 @@
 import cors from 'cors';
 import express from 'express';
 
-import {executeAndValidate} from './routes/execute-and-validate.js';
-import {getProblem} from './routes/problem.js';
+import { executeAndValidate } from './routes/execute-and-validate.js';
+import { getProblem } from './routes/problem.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 미들웨어
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
-}));
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
+);
 
-app.use(express.json({limit: '1mb'}));
+app.use(express.json({ limit: '1mb' }));
 
 // 로깅 미들웨어
 app.use((req, res, next) => {
@@ -39,7 +41,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    version: process.version
+    version: process.version,
   });
 });
 
@@ -52,16 +54,16 @@ app.get('/', (req, res) => {
       problem: {
         method: 'GET',
         path: '/api/problem',
-        description: '문제 데이터 조회'
+        description: '문제 데이터 조회',
       },
       executeAndValidate: {
         method: 'POST',
         path: '/api/execute-and-validate',
         description: '코드 실행 및 채점',
-        body: {code: 'string - 사용자 작성 코드'}
+        body: { code: 'string - 사용자 작성 코드' },
       },
-      health: {method: 'GET', path: '/health', description: '서버 상태 확인'}
-    }
+      health: { method: 'GET', path: '/health', description: '서버 상태 확인' },
+    },
   });
 });
 
@@ -70,8 +72,7 @@ app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `경로를 찾을 수 없습니다: ${req.method} ${req.path}`,
-    availableEndpoints:
-        ['GET /api/problem', 'POST /api/execute-and-validate', 'GET /health']
+    availableEndpoints: ['GET /api/problem', 'POST /api/execute-and-validate', 'GET /health'],
   });
 });
 
@@ -80,9 +81,7 @@ app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
     error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'production' ?
-        '서버 오류가 발생했습니다.' :
-        err.message
+    message: process.env.NODE_ENV === 'production' ? '서버 오류가 발생했습니다.' : err.message,
   });
 });
 

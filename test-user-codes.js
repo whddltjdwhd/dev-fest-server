@@ -3,7 +3,7 @@
  * 각 규칙별로 의도적으로 틀린 코드를 제출합니다
  */
 
-const API_URL = 'http://localhost:3000/api/execute-and-validate';
+const API_URL = 'http://localhost:3001/api/execute-and-validate';
 
 // 색상 출력용
 const colors = {
@@ -12,25 +12,22 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  magenta: '\x1b[35m'
+  magenta: '\x1b[35m',
 };
 
 async function testCode(testName, code, expectedRule) {
-  console.log(`\n${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${
-      colors.reset}`);
+  console.log(`\n${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
   console.log(`${colors.magenta}🧪 테스트: ${testName}${colors.reset}`);
   if (expectedRule) {
-    console.log(
-        `${colors.yellow}📋 예상 실패 규칙: ${expectedRule}${colors.reset}`);
+    console.log(`${colors.yellow}📋 예상 실패 규칙: ${expectedRule}${colors.reset}`);
   }
-  console.log(
-      `${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
+  console.log(`${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
 
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({code})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
     });
 
     const result = await response.json();
@@ -40,36 +37,30 @@ async function testCode(testName, code, expectedRule) {
       const statusColor = isExpected ? colors.green : colors.red;
       const statusIcon = isExpected ? '✅' : '❌';
 
-      console.log(
-          `\n${statusColor}${statusIcon} 실패 감지 성공!${colors.reset}`);
-      console.log(
-          `   실패 규칙: ${colors.yellow}${result.failedRule}${colors.reset}`);
+      console.log(`\n${statusColor}${statusIcon} 실패 감지 성공!${colors.reset}`);
+      console.log(`   실패 규칙: ${colors.yellow}${result.failedRule}${colors.reset}`);
       console.log(`   메시지: ${result.message}`);
 
       if (result.details && result.details.hint) {
-        console.log(
-            `   힌트: ${colors.blue}${result.details.hint}${colors.reset}`);
+        console.log(`   힌트: ${colors.blue}${result.details.hint}${colors.reset}`);
       }
 
       if (!isExpected) {
-        console.log(`\n${colors.red}⚠️  예상한 규칙(${
-            expectedRule})과 다릅니다!${colors.reset}`);
+        console.log(`\n${colors.red}⚠️  예상한 규칙(${expectedRule})과 다릅니다!${colors.reset}`);
       }
     } else {
       if (expectedRule) {
-        console.log(`\n${
-            colors.red}❌ 테스트 실패: 통과하면 안되는 코드가 통과했습니다!${
-            colors.reset}`);
+        console.log(
+          `\n${colors.red}❌ 테스트 실패: 통과하면 안되는 코드가 통과했습니다!${colors.reset}`
+        );
       } else {
         console.log(`\n${colors.green}✅ 성공!${colors.reset}`);
         console.log(`   메시지: ${result.message}`);
         if (result.details) {
-          console.log(`   슬롯 수: ${colors.yellow}${
-              result.details.totalSlots}${colors.reset}`);
+          console.log(`   슬롯 수: ${colors.yellow}${result.details.totalSlots}${colors.reset}`);
         }
       }
     }
-
   } catch (error) {
     console.log(`\n${colors.red}❌ 요청 오류: ${error.message}${colors.reset}`);
   }
@@ -249,10 +240,8 @@ ${colors.reset}`);
 
   await testCode('❌ Rule #1: 강의 시간 중첩', testCase1, 'RULE_OVERLAP');
   await testCode('❌ Rule #2: 이동 시간 미준수', testCase2, 'RULE_TRAVEL_TIME');
-  await testCode(
-      '❌ Rule #3: 최소 근무 시간 미달', testCase3, 'RULE_MIN_DURATION');
-  await testCode(
-      '❌ Rule #4: 캠퍼스 시간 위반', testCase4, 'RULE_CAMPUS_HOURS');
+  await testCode('❌ Rule #3: 최소 근무 시간 미달', testCase3, 'RULE_MIN_DURATION');
+  await testCode('❌ Rule #4: 캠퍼스 시간 위반', testCase4, 'RULE_CAMPUS_HOURS');
   await testCode('❌ Rule #5: 불완전한 답안', testCase5, 'RULE_INCOMPLETE');
   await testCode('✅ 정답 코드 (모든 규칙 통과)', testCase6, null);
   await testCode('❌ 문법 오류', testCase7, 'SYNTAX_ERROR');

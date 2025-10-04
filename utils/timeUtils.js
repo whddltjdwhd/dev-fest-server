@@ -187,8 +187,7 @@ export function areSlotsEqual(slots1, slots2) {
   // 각 요소 비교
   return sorted1.every((slot, i) => {
     const other = sorted2[i];
-    return slot.day === other.day && slot.start === other.start &&
-        slot.end === other.end;
+    return slot.day === other.day && slot.start === other.start && slot.end === other.end;
   });
 }
 
@@ -202,7 +201,7 @@ export function isValidSlot(slot) {
     return false;
   }
 
-  const {day, start, end} = slot;
+  const { day, start, end } = slot;
 
   // 필수 속성 확인
   if (!day || !start || !end) {
