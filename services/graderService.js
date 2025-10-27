@@ -3,7 +3,12 @@
  * 참가자의 제출물을 체계적으로 검증하는 핵심 채점 서비스
  */
 
-import { calculateCorrectSlots, MASTER_CONSTRAINTS, MASTER_SCHEDULE } from '../data/masterData.js';
+import {
+  calculateCorrectSlots,
+  MASTER_CONSTRAINTS,
+  MASTER_SCHEDULE,
+  RULE_DEFINITIONS,
+} from '../data/masterData.js';
 
 import {
   test_rule1_noOverlapWithClasses,
@@ -52,34 +57,46 @@ export function grade(
     {
       name: 'Rule #1: 강의 시간 중첩 검증',
       fn: () => test_rule1_noOverlapWithClasses(slots, masterSchedule),
+      ruleKey: 'RULE_OVERLAP',
     },
     {
       name: 'Rule #2: 이동 시간 준수 검증',
       fn: () => test_rule2_adheresToTravelTime(slots, masterSchedule, masterConstraints),
+      ruleKey: 'RULE_TRAVEL_TIME',
     },
     {
       name: 'Rule #3: 최소 근무 시간 검증',
       fn: () => test_rule3_meetsMinDuration(slots, masterConstraints),
+      ruleKey: 'RULE_MIN_DURATION',
     },
     {
       name: 'Rule #4: 캠퍼스 활동 시간 검증',
       fn: () => test_rule4_withinCampusHours(slots, masterConstraints),
+      ruleKey: 'RULE_CAMPUS_HOURS',
     },
     {
       name: 'Rule #5: 완전성 검증',
       fn: () => test_rule5_isComplete(slots, correctSlots),
+      ruleKey: 'RULE_INCOMPLETE',
     },
   ];
 
   // 모든 테스트를 실행하고 결과 수집
   const testResults = tests.map(test => {
     const result = test.fn();
+    const ruleKey = result.failedRule || test.ruleKey;
+    const definition = RULE_DEFINITIONS[ruleKey] || {};
+
     return {
       name: test.name,
-      rule: result.failedRule || (result.passed ? 'RULE_PASSED' : 'UNKNOWN'),
+      rule: ruleKey,
       passed: result.passed,
       message: result.message,
       details: result.details,
+      definition: {
+        name: definition.name || '알 수 없는 규칙',
+        description: definition.description || '규칙에 대한 설명이 없습니다.',
+      },
     };
   });
 
@@ -101,6 +118,7 @@ export function grade(
           rule: r.rule,
           passed: r.passed,
           message: '통과',
+          definition: r.definition,
         })),
       },
     };
@@ -111,6 +129,7 @@ export function grade(
       success: false,
       message: `채점 실패: ${passedCount}/${tests.length}개의 규칙을 통과했습니다.`,
       failedRule: firstFailure.rule,
+      failedRuleDefinition: firstFailure.definition,
       details: {
         hint: firstFailure.details?.hint || firstFailure.message,
         totalTests: tests.length,
@@ -121,6 +140,7 @@ export function grade(
           passed: r.passed,
           message: r.passed ? '통과' : r.message,
           details: r.passed ? null : r.details,
+          definition: r.definition,
         })),
       },
     };

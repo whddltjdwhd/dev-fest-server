@@ -155,6 +155,51 @@ export const RULE_TYPES = {
 };
 
 /**
+ * 채점 규칙 상세 정보
+ * 각 규칙에 대한 이름과 설명을 정의합니다.
+ */
+export const RULE_DEFINITIONS = {
+  RULE_OVERLAP: {
+    name: '강의 시간 중첩 금지',
+    description: '알바 시간이 기존 강의 시간과 겹치지 않아야 합니다.',
+  },
+  RULE_TRAVEL_TIME: {
+    name: '이동 시간 준수',
+    description:
+      '강의 전후로 이동 시간이 필요합니다. 일반 건물은 15분, 인접 건물은 5분이 적용됩니다.',
+  },
+  RULE_MIN_DURATION: {
+    name: '최소 근무 시간 준수',
+    description: '알바는 최소 60분 이상이어야 합니다.',
+  },
+  RULE_CAMPUS_HOURS: {
+    name: '캠퍼스 활동 시간 준수',
+    description: '알바는 캠퍼스 활동 시간(09:00 ~ 18:00) 내에만 가능합니다.',
+  },
+  RULE_INCOMPLETE: {
+    name: '완전성 검사',
+    description: '찾을 수 있는 모든 알바 시간을 빠짐없이 찾아야 합니다.',
+  },
+  INVALID_FORMAT: {
+    name: '제출 형식 오류',
+    description:
+      '제출된 데이터의 형식이 올바르지 않습니다. 반환값은 배열이어야 하며, 각 요소는 day, start, end 키를 가져야 합니다.',
+  },
+  EXECUTION_ERROR: {
+    name: '코드 실행 오류',
+    description: '제출된 코드에 문법 오류가 있거나 실행 중 에러가 발생했습니다.',
+  },
+  TIMEOUT: {
+    name: '시간 초과',
+    description: '코드 실행 시간이 1초를 초과했습니다. 무한 루프 등을 확인해주세요.',
+  },
+  SECURITY_VIOLATION: {
+    name: '보안 규칙 위반',
+    description: 'fs, process 등 허용되지 않은 모듈이나 API를 사용했습니다.',
+  },
+};
+
+/**
  * 정답 자동 계산 함수
  * 강의 시간표와 제약 조건으로부터 올바른 알바 가능 시간을 계산
  */
