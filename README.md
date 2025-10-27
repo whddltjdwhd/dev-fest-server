@@ -111,18 +111,60 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "🎉 미션 성공!",
-  "details": { "totalSlots": 6 }
+  "message": "🎉 미션 성공! 모든 규칙을 완벽하게 통과했습니다.",
+  "details": {
+    "totalSlots": 6,
+    "totalTests": 5,
+    "passedCount": 5,
+    "failedCount": 0,
+    "results": [
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" }
+    ]
+  }
 }
 ```
 
-**실패 응답:**
+**실패 응답 (상세 정보 포함):**
 
 ```json
 {
   "success": false,
-  "message": "이동 시간을 고려하지 않았습니다",
-  "failedRule": "RULE_TRAVEL_TIME"
+  "message": "채점 실패: 3/5개의 규칙을 통과했습니다.",
+  "failedRule": "RULE_TRAVEL_TIME",
+  "details": {
+    "hint": "수업 전후 이동 시간(15분)을 정확히 반영하지 않았습니다.",
+    "totalTests": 5,
+    "passedCount": 3,
+    "failedCount": 2,
+    "results": [
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      {
+        "rule": "RULE_TRAVEL_TIME",
+        "passed": false,
+        "message": "수업 전후 이동 시간(15분)을 정확히 반영하지 않았습니다.",
+        "details": {
+          "problematicSlot": { "day": "화", "start": "11:00", "end": "12:45" },
+          "hint": "화요일 강의가 11:00에 끝나므로, 알바는 최소 11:15부터 시작해야 합니다. (현재: 11:00)"
+        }
+      },
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      { "rule": "RULE_PASSED", "passed": true, "message": "통과" },
+      {
+        "rule": "RULE_INCOMPLETE",
+        "passed": false,
+        "message": "몇몇 가능한 알바 시간을 놓친 것 같습니다. 모든 공강 시간을 확인했나요?",
+        "details": {
+          "missing": [
+            /* 누락된 시간 정보 */
+          ]
+        }
+      }
+    ]
+  }
 }
 ```
 
