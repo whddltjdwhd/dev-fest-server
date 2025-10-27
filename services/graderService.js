@@ -35,6 +35,7 @@ export function grade(
 ) {
   // 정답 자동 계산
   const correctSlots = calculateCorrectSlots(masterSchedule, masterConstraints);
+
   // 기본 검증
   const validation = validateSubmission(slots);
   if (!validation.valid) {
@@ -47,7 +48,6 @@ export function grade(
   }
 
   // 테스트 스위트 정의
-  // 각 테스트는 독립적이며 순차적으로 실행됨
   const tests = [
     {
       name: 'Rule #1: 강의 시간 중첩 검증',
@@ -71,29 +71,60 @@ export function grade(
     },
   ];
 
-  // 테스트 순차 실행
-  for (const test of tests) {
+  // 모든 테스트를 실행하고 결과 수집
+  const testResults = tests.map(test => {
     const result = test.fn();
+    return {
+      name: test.name,
+      rule: result.failedRule || (result.passed ? 'RULE_PASSED' : 'UNKNOWN'),
+      passed: result.passed,
+      message: result.message,
+      details: result.details,
+    };
+  });
 
-    if (!result.passed) {
-      // 실패 시 즉시 결과 반환
-      return {
-        success: false,
-        message: result.message,
-        failedRule: result.failedRule,
-        failedTest: test.name,
-        details: result.details,
-        hint: result.details?.hint,
-      };
-    }
+  const passedCount = testResults.filter(r => r.passed).length;
+  const failedCount = testResults.length - passedCount;
+  const allPassed = failedCount === 0;
+
+  if (allPassed) {
+    // 모든 테스트 통과
+    return {
+      success: true,
+      message: `🎉 미션 성공! ${passedCount}/${tests.length}개의 규칙을 완벽하게 통과했습니다.`,
+      details: {
+        totalSlots: slots.length,
+        totalTests: tests.length,
+        passedCount,
+        failedCount,
+        results: testResults.map(r => ({
+          rule: r.rule,
+          passed: r.passed,
+          message: '통과',
+        })),
+      },
+    };
+  } else {
+    // 일부 테스트 실패
+    const firstFailure = testResults.find(r => !r.passed);
+    return {
+      success: false,
+      message: `채점 실패: ${passedCount}/${tests.length}개의 규칙을 통과했습니다.`,
+      failedRule: firstFailure.rule,
+      details: {
+        hint: firstFailure.details?.hint || firstFailure.message,
+        totalTests: tests.length,
+        passedCount,
+        failedCount,
+        results: testResults.map(r => ({
+          rule: r.rule,
+          passed: r.passed,
+          message: r.passed ? '통과' : r.message,
+          details: r.passed ? null : r.details,
+        })),
+      },
+    };
   }
-
-  // 모든 테스트 통과
-  return {
-    success: true,
-    message: '🎉 미션 성공! 모든 규칙을 완벽하게 통과했습니다!',
-    details: { totalSlots: slots.length, allTestsPassed: true },
-  };
 }
 
 /**
