@@ -5,7 +5,8 @@
 
 /**
  * 주간 강의 시간표 (MASTER_SCHEDULE)
- * 각 강의는 이름(name), 요일(day), 시작시간(start), 종료시간(end), 장소(location)로 구성
+ * 각 강의는 이름(name), 요일(day), 시작시간(start), 종료시간(end),
+ * 장소(location)로 구성
  */
 export const MASTER_SCHEDULE = [
   // 월요일
@@ -123,7 +124,7 @@ export const MASTER_CONSTRAINTS = {
   minWorkableSession: 60,
 
   // 캠퍼스 활동 시간
-  campusHours: { start: '09:00', end: '18:00' },
+  campusHours: {start: '09:00', end: '18:00'},
 
   // 요일 순서 (정렬용)
   dayOrder: ['월', '화', '수', '목', '금'],
@@ -134,9 +135,9 @@ export const MASTER_CONSTRAINTS = {
   // 인접 건물 정보 (카페에서 가까운 건물들)
   // 이 건물들에서 끝나는 수업 후에는 이동 시간이 5분으로 단축
   adjacentBuildings: [
-    '정보문화관 P407', // 화요일 자료구조 및 실습
-    '백양관 세미나실', // 화요일 운영체제
-    '학생회관 대강당', // 수요일 소프트웨어공학개론
+    '정보문화관 P407',  // 화요일 자료구조 및 실습
+    '백양관 세미나실',  // 화요일 운영체제
+    '학생회관 대강당',  // 수요일 소프트웨어공학개론
   ],
 
   // 단축된 이동 시간 (인접 건물에서 카페까지)
@@ -147,11 +148,11 @@ export const MASTER_CONSTRAINTS = {
  * 채점 결과 타입 정의
  */
 export const RULE_TYPES = {
-  OVERLAP: 'RULE_OVERLAP', // 강의 시간 중첩
-  TRAVEL_TIME: 'RULE_TRAVEL_TIME', // 이동 시간 미준수
-  MIN_DURATION: 'RULE_MIN_DURATION', // 최소 근무 시간 미달
-  CAMPUS_HOURS: 'RULE_CAMPUS_HOURS', // 캠퍼스 활동 시간 위반
-  INCOMPLETE: 'RULE_INCOMPLETE', // 누락된 시간대 존재
+  OVERLAP: 'RULE_OVERLAP',            // 강의 시간 중첩
+  TRAVEL_TIME: 'RULE_TRAVEL_TIME',    // 이동 시간 미준수
+  MIN_DURATION: 'RULE_MIN_DURATION',  // 최소 근무 시간 미달
+  CAMPUS_HOURS: 'RULE_CAMPUS_HOURS',  // 캠퍼스 활동 시간 위반
+  INCOMPLETE: 'RULE_INCOMPLETE',      // 누락된 시간대 존재
 };
 
 /**
@@ -166,7 +167,7 @@ export const RULE_DEFINITIONS = {
   RULE_TRAVEL_TIME: {
     name: '이동 시간 준수',
     description:
-      '강의 전후로 이동 시간이 필요합니다. 일반 건물은 15분, 인접 건물은 5분이 적용됩니다.',
+        '강의 전후로 이동 시간이 필요합니다. 일반 건물은 15분, 인접 건물은 5분이 적용됩니다.',
   },
   RULE_MIN_DURATION: {
     name: '최소 근무 시간 준수',
@@ -183,15 +184,17 @@ export const RULE_DEFINITIONS = {
   INVALID_FORMAT: {
     name: '제출 형식 오류',
     description:
-      '제출된 데이터의 형식이 올바르지 않습니다. 반환값은 배열이어야 하며, 각 요소는 day, start, end 키를 가져야 합니다.',
+        '제출된 데이터의 형식이 올바르지 않습니다. 반환값은 배열이어야 하며, 각 요소는 day, start, end 키를 가져야 합니다.',
   },
   EXECUTION_ERROR: {
     name: '코드 실행 오류',
-    description: '제출된 코드에 문법 오류가 있거나 실행 중 에러가 발생했습니다.',
+    description:
+        '제출된 코드에 문법 오류가 있거나 실행 중 에러가 발생했습니다.',
   },
   TIMEOUT: {
     name: '시간 초과',
-    description: '코드 실행 시간이 1초를 초과했습니다. 무한 루프 등을 확인해주세요.',
+    description:
+        '코드 실행 시간이 1초를 초과했습니다. 무한 루프 등을 확인해주세요.',
   },
   SECURITY_VIOLATION: {
     name: '보안 규칙 위반',
@@ -204,62 +207,47 @@ export const RULE_DEFINITIONS = {
  * 강의 시간표와 제약 조건으로부터 올바른 알바 가능 시간을 계산
  */
 export function calculateCorrectSlots(
-  schedule = MASTER_SCHEDULE,
-  constraints = MASTER_CONSTRAINTS
-) {
+    schedule = MASTER_SCHEDULE, constraints = MASTER_CONSTRAINTS) {
   const slots = [];
-  const { campusHours } = constraints;
 
   for (const day of constraints.dayOrder) {
-    const classesOnDay = schedule
-      .filter(cls => cls.day === day)
-      .sort((a, b) => a.start.localeCompare(b.start));
+    const classes = schedule.filter(cls => cls.day === day)
+                        .sort((a, b) => a.start.localeCompare(b.start));
 
-    if (classesOnDay.length === 0) continue;
+    if (classes.length === 0) continue;
 
-    // 강의 사이의 공강 시간 찾기
-    for (let i = 0; i < classesOnDay.length - 1; i++) {
-      const currentClass = classesOnDay[i];
-      const nextClass = classesOnDay[i + 1];
+    // 캠퍼스 시작/종료를 포함한 경계 배열 생성
+    // 이를 통해 "첫 강의 이전", "강의 사이", "마지막 강의 이후"를 통합 처리
+    const boundaries = [
+      {end: constraints.campusHours.start, location: null},  // 캠퍼스 시작
+      ...classes,
+      {start: constraints.campusHours.end, location: null}  // 캠퍼스 종료
+    ];
 
-      // 🎁 Rule #6: 인접 건물 보너스 적용 (현재 강의)
-      const isCurrentAdjacent =
-        constraints.adjacentBuildings &&
-        constraints.adjacentBuildings.includes(currentClass.location);
-      const startTravelTime = isCurrentAdjacent
-        ? constraints.reducedTravelTime
-        : constraints.travelTime;
+    // 연속된 경계 쌍을 순회하며 알바 가능 시간 찾기
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      const prev = boundaries[i];
+      const next = boundaries[i + 1];
 
-      // 🎁 Rule #6: 인접 건물 보너스 적용 (다음 강의)
-      const isNextAdjacent =
-        constraints.adjacentBuildings && constraints.adjacentBuildings.includes(nextClass.location);
-      const endTravelTime = isNextAdjacent ? constraints.reducedTravelTime : constraints.travelTime;
+      // 이전 경계의 종료 시간과 다음 경계의 시작 시간 사이가 알바 가능 구간
+      const gapStart = prev.end || prev.start;
+      const gapEnd = next.start || next.end;
 
-      // 이동 시간을 고려한 실제 가능 시간
-      const workableStart = addMinutes(currentClass.end, startTravelTime);
-      const workableEnd = addMinutes(nextClass.start, -endTravelTime);
+      // 이동 시간 계산 (인접 건물 보너스 적용)
+      const startTravelTime =
+          prev.location ? getTravelTime(prev.location, constraints) : 0;
+      const endTravelTime =
+          next.location ? getTravelTime(next.location, constraints) : 0;
 
+      // 실제 알바 가능 시간
+      const workableStart = addMinutes(gapStart, startTravelTime);
+      const workableEnd = addMinutes(gapEnd, -endTravelTime);
+
+      // 최소 근무 시간 이상이면 추가
       const duration = getMinutesDiff(workableStart, workableEnd);
-
-      // 최소 근무 시간 이상인 경우만 추가
       if (duration >= constraints.minWorkableSession) {
-        slots.push({ day, start: workableStart, end: workableEnd });
+        slots.push({day, start: workableStart, end: workableEnd});
       }
-    }
-
-    // 마지막 강의 이후 시간 체크
-    const lastClass = classesOnDay[classesOnDay.length - 1];
-    const isLastClassAdjacent =
-      constraints.adjacentBuildings && constraints.adjacentBuildings.includes(lastClass.location);
-    const lastClassTravelTime = isLastClassAdjacent
-      ? constraints.reducedTravelTime
-      : constraints.travelTime;
-
-    const afterClassStart = addMinutes(lastClass.end, lastClassTravelTime);
-    const afterClassDuration = getMinutesDiff(afterClassStart, campusHours.end);
-
-    if (afterClassDuration >= constraints.minWorkableSession) {
-      slots.push({ day, start: afterClassStart, end: campusHours.end });
     }
   }
 
@@ -267,6 +255,18 @@ export function calculateCorrectSlots(
 }
 
 // 헬퍼 함수
+/**
+ * 건물 위치에 따른 이동 시간 계산
+ * @param {string} location - 건물 위치
+ * @param {Object} constraints - 제약 조건
+ * @returns {number} 이동 시간 (분)
+ */
+function getTravelTime(location, constraints) {
+  return constraints.adjacentBuildings?.includes(location) ?
+      constraints.reducedTravelTime :
+      constraints.travelTime;
+}
+
 function addMinutes(time, minutes) {
   const [h, m] = time.split(':').map(Number);
   const totalMinutes = h * 60 + m + minutes;
